@@ -7,35 +7,33 @@ const App = () => {
   const [displayValue, setDisplayValue] = useState('0');
   const [clearDisplay, setClearDisplay] = useState(false);
   const [operation, setOperation] = useState(null);
-  const [values, setValues] = useState([]);
+  const [values, setValues] = useState([0, 0]);
   const [currentIndexValues, setCurrentIndexValues] = useState(0);
-  console.log('✌️currentIndexValues --->', currentIndexValues);
-  console.log('✌️values --->', values);
 
   function addDigit(value) {
     if (value === '.' && displayValue.includes('.')) {
       return;
     }
 
-    if (displayValue === '0' && value === '0') {
-      return;
-    }
+    const clear = displayValue === '0' || clearDisplay;
+    const currentValue = clear ? '' : displayValue;
+    const newDisplayValue = currentValue + value;
+    setDisplayValue(newDisplayValue);
+    setClearDisplay(false);
 
-    setDisplayValue(actual => {
-      if (clearDisplay) {
-        setClearDisplay(false);
-        return value;
-      } else {
-        return actual === '0' ? value : `${actual}${value}`;
-      }
-    });
+    if (value !== '.') {
+      const newValue = parseFloat(newDisplayValue);
+      const newValues = [...values];
+      newValues[currentIndexValues] = newValue;
+      setValues(newValues);
+    }
   }
 
   function clearMemory() {
     setDisplayValue('0');
     setClearDisplay(false);
     setOperation(null);
-    setValues([]);
+    setValues([0, 0]);
     setCurrentIndexValues(0);
   }
 
@@ -44,61 +42,24 @@ const App = () => {
       setOperation(value);
       setCurrentIndexValues(1);
       setClearDisplay(true);
-    }
-
-    if (
-      currentIndexValues === 1 &&
-      (operation === '+' ||
-        operation === '-' ||
-        operation === '*' ||
-        operation === '/')
-    ) {
-      setOperation(value);
-      setClearDisplay(true);
-      if (values.length === 2) {
-        let result = 0;
-
-        switch (operation) {
-          case '+':
-            result = values[0] + values[1];
-            break;
-
-          case '-':
-            result = values[0] - values[1];
-            break;
-
-          case '*':
-            result = values[0] * values[1];
-            break;
-
-          case '/':
-            result = values[0] / values[1];
-            break;
-
-          default:
-            break;
-        }
-        setValues([result]);
-        setDisplayValue(`${result}`);
+    } else {
+      const equals = value === '=';
+      const newValues = [...values];
+      try {
+        // eslint-disable-next-line no-eval
+        newValues[0] = eval(`${newValues[0]} ${operation} ${newValues[1]}`);
+      } catch (e) {
+        newValues[0] = values[0];
       }
-    }
 
-    if (operation === '=') {
-      setDisplayValue(values[1]);
-      setOperation(null);
-      setValues([]);
-      setCurrentIndexValues(0);
-      setClearDisplay(true);
+      newValues[1] = 0;
+      setDisplayValue(`${newValues[0]}`);
+      setOperation(equals ? null : value);
+      setCurrentIndexValues(equals ? 0 : 1);
+      setClearDisplay(!equals);
+      setValues(newValues);
     }
   }
-
-  useEffect(() => {
-    const newValue = parseFloat(displayValue);
-    const newValues = [...values];
-    newValues[currentIndexValues] = newValue;
-    setValues(newValues);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayValue]);
 
   return (
     <SafeAreaView style={styles.container}>
