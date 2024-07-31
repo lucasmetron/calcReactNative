@@ -11,13 +11,14 @@ const App = () => {
   const [currentIndexValues, setCurrentIndexValues] = useState(0);
 
   function addDigit(value) {
-    if (value === '.' && displayValue.includes('.')) {
-      return;
-    }
-
     const clear = displayValue === '0' || clearDisplay;
     const currentValue = clear ? '' : displayValue;
     const newDisplayValue = currentValue + value;
+
+    if (value === '.' && displayValue.includes('.') && !clear) {
+      return;
+    }
+
     setDisplayValue(newDisplayValue);
     setClearDisplay(false);
 
